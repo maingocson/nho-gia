@@ -167,6 +167,16 @@ header { align-items: center }
 .khead h2 span { background: var(--sticker); color: var(--sticker-ink); padding: 0 6px; border-radius: 6px }
 .klock { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); display: grid; place-items: center; opacity: .6 }
 .klock svg { width: 18px; height: 18px }
+.khead h2 { flex: 1 }
+.ksound { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; font-weight: 600; color: var(--ink) }
+.ksound svg { width: 18px; height: 18px }
+.ksound[aria-pressed="true"] .off, .ksound[aria-pressed="false"] .on { display: none }
+.ksound[aria-pressed="false"] { color: var(--muted) }
+.kscan { display: flex; align-items: center; justify-content: center; gap: 8px }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; animation: pl 1.4s ease-in-out infinite }
+@keyframes pl { 0%, 100% { opacity: .25; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.1) } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none } }
+@media (max-width: 400px) { .ksound span { display: none } .ksound { width: 40px; padding: 0; justify-content: center } }
 .kbody { display: flex; flex-direction: column; gap: 14px; flex: 1 }
 .kcenter { align-items: center; justify-content: center }
 .kframe { position: relative; width: min(100%, 58vh); aspect-ratio: 1; align-self: center; border-radius: 24px; overflow: hidden; background: #000; max-width: 100% }
@@ -332,6 +342,11 @@ header { align-items: center }
   <div class="kwrap">
     <div class="khead">
       <h2>Kiểm tra <span>giá</span></h2>
+      <button class="ksound" id="kSound" type="button" aria-pressed="true" aria-label="Đọc giá thành tiếng">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+        <span id="kSoundTxt">Tiếng: bật</span>
+      </button>
       <button class="klock" id="kLock" type="button" aria-label="Thoát chế độ khách">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
       </button>
@@ -342,7 +357,7 @@ header { align-items: center }
         <div class="kNoCam" id="kNoCam" hidden>Bấm nút bên dưới để mở camera</div>
         <i class="kguide" aria-hidden="true"></i>
       </div>
-      <p class="khint">Đưa sản phẩm vào giữa khung, rồi bấm chụp</p>
+      <p class="khint kscan" id="kScanHint"><i class="pulse" aria-hidden="true"></i><span id="kScanTxt">Đưa sản phẩm vào giữa khung và giữ yên, app sẽ tự xem giá</span></p>
       <button class="kbtn" id="kSnap" type="button">Chụp để xem giá</button>
     </section>
     <section class="kbody kcenter" id="kBusy" hidden>
@@ -1014,8 +1029,12 @@ async function kCheck(img) {
   finally { K.busy = false; }
 }
 function kResult(r, img) {
-  const top = r[0]; const body = $('kResBody'); body.textContent = '';  if (!top || top.s < MAYBE) return kMessage('Chưa tìm thấy giá', 'Hãy đưa sản phẩm gần hơn, đủ sáng rồi chụp lại, hoặc hỏi nhân viên.');
+  const top = r[0]; const body = $('kResBody'); body.textContent = '';
+  if (!top || top.s < MAYBE) { say('Chưa tìm thấy giá, vui lòng thử lại.'); return kMessage('Chưa tìm thấy giá', 'Hãy đưa sản phẩm gần hơn, đủ sáng rồi chụp lại, hoặc hỏi nhân viên.'); }
   const sure = top.s >= SURE && !(r[1] && top.p.price !== r[1].p.price && top.s - r[1].s < 0.03);
+  AUTO.block = top.p.id;   // don't re-announce the same item while it is still held up
+  const label = [top.p.name, top.p.brand].filter(Boolean).join(' ');
+  say((sure ? '' : 'Có thể là ') + (label ? label + ', ' : '') + readVN(top.p.price) + ' đồng');
   const v = document.createElement('span'); v.className = 'verdict ' + (sure ? 'v-good' : 'v-warn'); v.textContent = sure ? 'Giá sản phẩm' : 'Có thể là sản phẩm này';
   const im = document.createElement('img'); im.src = top.p.photos[0].img; im.alt = '';
   const price = document.createElement('div'); price.className = 'bigprice'; price.textContent = fmt(top.p.price);
@@ -1038,6 +1057,87 @@ function kShowResult() {
 }
 function kBack() { clearTimeout(K.timer); kShow('kIdle'); startCam(); }
 $('kAgain').addEventListener('click', kBack);
+
+/* auto scan: look at the live camera a couple of times a second; show a price only for a
+   confident match that stays the same on two steady frames in a row */
+const AUTO = { t: null, sig: null, cand: null, n: 0, block: null, every: 500 };
+function graySig(c) {
+  const t = document.createElement('canvas'); t.width = t.height = 16;
+  const g = t.getContext('2d'); g.drawImage(c, 0, 0, 16, 16);
+  const d = g.getImageData(0, 0, 16, 16).data; const out = new Float32Array(256);
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) out[j] = (d[i] + d[i + 1] + d[i + 2]) / 3;
+  return out;
+}
+function sigDiff(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; }
+function autoTick() {
+  AUTO.t = setTimeout(autoTick, AUTO.every);
+  if ($('kiosk').hidden || $('kIdle').hidden || !$('pinSheet').hidden || document.hidden || K.busy || !feat || !K.stream) return;
+  const v = $('kVideo'); if (!v.videoWidth) return;
+  const t0 = performance.now();
+  const frame = square(v, 224);
+  if (blankFrame(frame)) { AUTO.block = null; AUTO.sig = null; return; }   // empty, flat view: nothing is held up
+  const sig = graySig(frame); const prev = AUTO.sig; AUTO.sig = sig;
+  if (!prev || sigDiff(sig, prev) > 9) { AUTO.cand = null; AUTO.n = 0; return; }   // still moving: wait until steady
+  const r = match([vec(frame), vec(mirrored(frame))]);
+  const top = r[0];
+  const sure = top && top.s >= SURE && !(r[1] && top.p.price !== r[1].p.price && top.s - r[1].s < 0.03);
+  if (!top || top.s < MAYBE) AUTO.block = null;     // the last item has left the frame
+  if (!sure || AUTO.block === top.p.id) { AUTO.cand = null; AUTO.n = 0; }
+  else {
+    if (AUTO.cand === top.p.id) AUTO.n++; else { AUTO.cand = top.p.id; AUTO.n = 1; }
+    if (AUTO.n >= 2) { AUTO.cand = null; AUTO.n = 0; kResult(r, frame.toDataURL('image/jpeg', 0.85)); }
+  }
+  // slower phones (or the fallback engine) scan less often to stay cool
+  AUTO.every = performance.now() - t0 > 250 ? 1200 : 500;
+}
+autoTick();
+
+/* spoken price (iPhone's built-in Vietnamese voice, works offline) */
+const DIG = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+function read3(n, full) {   // 0..999; full = say "không trăm" / "linh" inside a longer number
+  const h = Math.floor(n / 100), t = Math.floor(n / 10) % 10, u = n % 10; const w = [];
+  if (h || full) w.push(DIG[h], 'trăm');
+  if (t === 0) { if (u && (h || full)) w.push('linh'); }
+  else if (t === 1) w.push('mười');
+  else w.push(DIG[t], 'mươi');
+  if (u) w.push(u === 1 && t > 1 ? 'mốt' : u === 5 && t > 0 ? 'lăm' : DIG[u]);
+  return w.join(' ');
+}
+function readVN(n) {
+  n = Math.round(Number(n) || 0); if (!n) return 'không';
+  // spoken the everyday way: 1.005.000 -> "một triệu năm nghìn"
+  const units = ['', ' nghìn', ' triệu', ' tỷ']; const parts = []; const groups = [];
+  for (let i = 0; n > 0 && i < 4; i++) { groups.push(n % 1000); n = Math.floor(n / 1000); }
+  for (let k = groups.length - 1; k >= 0; k--) if (groups[k]) parts.push(read3(groups[k], false) + units[k]);
+  return parts.join(' ');
+}
+let viVoice = null;
+function pickVoice() { try { viVoice = speechSynthesis.getVoices().find(v => /^vi/i.test(v.lang)) || null; } catch (e) {} }
+if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {} }
+const soundOn = () => LS.get('nho-gia-sound') !== '0';
+function say(text) {
+  if (!soundOn() || !('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; if (viVoice) u.voice = viVoice; u.rate = 1;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+// iPhone only lets a page speak after a tap; the first tap in customer mode unlocks it
+let speechReady = false;
+function unlockSpeech() {
+  if (speechReady || !('speechSynthesis' in window)) return; speechReady = true;
+  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'vi-VN'; speechSynthesis.speak(u); } catch (e) {}
+}
+$('kiosk').addEventListener('pointerdown', unlockSpeech, true);
+$('pinSheet').addEventListener('pointerdown', unlockSpeech, true);
+$('btnKiosk').addEventListener('pointerdown', unlockSpeech, true);
+function drawSound() { const on = soundOn(); $('kSound').setAttribute('aria-pressed', String(on)); $('kSoundTxt').textContent = on ? 'Tiếng: bật' : 'Tiếng: tắt'; }
+$('kSound').addEventListener('click', () => {
+  LS.set('nho-gia-sound', soundOn() ? '0' : null); drawSound();
+  if (soundOn()) say('Đã bật đọc giá'); else try { speechSynthesis.cancel(); } catch (e) {}
+});
+drawSound();
 
 /* ---------- backup ---------- */
 $('btnExport').addEventListener('click', async () => {
