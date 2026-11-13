@@ -153,6 +153,52 @@ label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font
 @keyframes sp { to { transform: rotate(360deg) } }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s } .big:active { transform: none } }
 
+/* customer mode */
+.kbtnSm { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 12px; font-size: 14px; font-weight: 600; margin-left: auto }
+.kbtnSm svg { width: 16px; height: 16px }
+header { align-items: center }
+.kiosk { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
+.kwrap { max-width: 640px; min-height: 100%; margin: 0 auto; padding-block: 14px 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px }
+.khead { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.khead h2 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em }
+.khead h2 span { background: var(--sticker); color: var(--sticker-ink); padding: 0 6px; border-radius: 6px }
+.klock { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); display: grid; place-items: center; opacity: .6 }
+.klock svg { width: 18px; height: 18px }
+.kbody { display: flex; flex-direction: column; gap: 14px; flex: 1 }
+.kcenter { align-items: center; justify-content: center }
+.kframe { position: relative; width: min(100%, 58vh); aspect-ratio: 1; align-self: center; border-radius: 24px; overflow: hidden; background: #000; max-width: 100% }
+.kframe video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block }
+.kNoCam { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; text-align: center; padding: 24px; font-size: 18px }
+.kguide { position: absolute; inset: 14%; border: 3px dashed rgba(255,255,255,.75); border-radius: 18px; pointer-events: none }
+.khint { margin: 0; text-align: center; color: var(--muted); font-size: 17px }
+.kbtn { border: 0; border-radius: 18px; padding: 20px; font-size: 22px; font-weight: 800; background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow) }
+.kbtn:active { transform: scale(.98) }
+.kspin { width: 56px; height: 56px; border-width: 6px }
+.kres { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; flex: 1; justify-content: center }
+.kres img { width: min(60%, 260px); aspect-ratio: 1; object-fit: cover; border-radius: 18px; box-shadow: var(--shadow) }
+.kres .bigprice { align-self: center; font-size: clamp(48px, 15vw, 88px) }
+.kres .rname { font-size: 22px }
+.kres .verdict { align-self: center }
+.kmiss { font-size: 24px; font-weight: 800 }
+.kbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden }
+.kbar i { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: left; transition: transform linear }
+.pin { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); display: grid; place-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.pinBox { background: var(--surface); border-radius: 20px; padding: 22px; width: min(100%, 340px); display: flex; flex-direction: column; gap: 14px; align-items: center; box-shadow: var(--shadow) }
+.pinBox h3 { margin: 0; font-size: 19px; text-align: center }
+.pinBox .hint { text-align: center; min-height: 18px }
+.pinDots { display: flex; gap: 16px }
+.pinDots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink) }
+.pinDots i.on { background: var(--ink) }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100% }
+.pad button { border: 1px solid var(--line); background: var(--bg); border-radius: 14px; padding: 14px 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums }
+.pad .padTxt { font-size: 17px; font-weight: 600 }
+.shake { animation: shk .35s }
+@keyframes shk { 25% { transform: translateX(-8px) } 75% { transform: translateX(8px) } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none } .kbar i { transition: none } }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 40;
   background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 600; max-width: calc(100% - 32px); box-shadow: var(--shadow) }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0) }
@@ -164,6 +210,10 @@ label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font
   <header>
     <h1>Nhớ <span>Giá</span></h1>
     <div class="count num" id="count"></div>
+    <button class="kbtnSm" id="btnKiosk" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      Chế độ khách
+    </button>
   </header>
 
   <div class="actions">
@@ -276,6 +326,51 @@ label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font
     </div>
   </div>
 </div>
+
+<!-- CUSTOMER MODE: price check only, front camera, PIN to leave -->
+<div class="kiosk" id="kiosk" hidden>
+  <div class="kwrap">
+    <div class="khead">
+      <h2>Kiểm tra <span>giá</span></h2>
+      <button class="klock" id="kLock" type="button" aria-label="Thoát chế độ khách">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </button>
+    </div>
+    <section class="kbody" id="kIdle">
+      <div class="kframe">
+        <video id="kVideo" playsinline muted autoplay></video>
+        <div class="kNoCam" id="kNoCam" hidden>Bấm nút bên dưới để mở camera</div>
+        <i class="kguide" aria-hidden="true"></i>
+      </div>
+      <p class="khint">Đưa sản phẩm vào giữa khung, rồi bấm chụp</p>
+      <button class="kbtn" id="kSnap" type="button">Chụp để xem giá</button>
+    </section>
+    <section class="kbody kcenter" id="kBusy" hidden>
+      <i class="spin kspin"></i>
+      <p class="khint">Đang tìm giá…</p>
+    </section>
+    <section class="kbody" id="kRes" hidden>
+      <div class="kres" id="kResBody"></div>
+      <div class="kbar" aria-hidden="true"><i id="kBarFill"></i></div>
+      <button class="kbtn" id="kAgain" type="button">Kiểm tra sản phẩm khác</button>
+    </section>
+  </div>
+</div>
+
+<div class="pin" id="pinSheet" hidden>
+  <div class="pinBox" id="pinBox">
+    <h3 id="pinTitle">Nhập mã PIN</h3>
+    <div class="pinDots" id="pinDots" aria-live="polite"><i></i><i></i><i></i><i></i></div>
+    <p class="hint" id="pinHint"></p>
+    <div class="pad">
+      <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+      <button type="button" data-k="cancel" class="padTxt">Hủy</button><button type="button" data-k="0">0</button><button type="button" data-k="del" class="padTxt" aria-label="Xóa số">⌫</button>
+    </div>
+  </div>
+</div>
+<input class="vh" type="file" id="camUser" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
 
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -478,7 +573,7 @@ function loadImage(file) {
 }
 // center-square crop to size px
 function square(src, size, frac = 1) {
-  const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+  const w = src.videoWidth || src.naturalWidth || src.width, h = src.videoHeight || src.naturalHeight || src.height;
   const s = Math.min(w, h) * frac;
   const c = document.createElement('canvas'); c.width = c.height = size;
   const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
@@ -794,6 +889,156 @@ $('editDelYes').addEventListener('click', async () => {
   if (await store.deleteProduct(p)) toast('Đã xóa sản phẩm');
 });
 
+/* ---------- CUSTOMER MODE ---------- */
+// small settings (mode flag, PIN hash) live in localStorage; wrapped because storage can throw
+const LS = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+};
+async function hashPin(p) {
+  try {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('nho-gia:' + p));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  } catch (e) { return 'p:' + p; }
+}
+const K = { stream: null, timer: null, wake: null, busy: false };
+const AUTO_BACK_MS = 10000;
+
+/* PIN pad */
+let pinMode = null, pinBuf = '', pinFirst = '';
+function openPin(mode) {
+  pinMode = mode; pinBuf = ''; pinFirst = '';
+  $('pinTitle').textContent = mode === 'set' ? 'Đặt mã PIN 4 số' : 'Nhập mã PIN để thoát';
+  $('pinHint').textContent = mode === 'set' ? 'Dùng mã này để thoát chế độ khách. Hãy ghi nhớ.' : '';
+  drawPin(); $('pinSheet').hidden = false;
+}
+function drawPin() { $('pinDots').querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length)); }
+function closePin() { $('pinSheet').hidden = true; pinMode = null; pinBuf = ''; }
+function shake() { const b = $('pinBox'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+async function pinDone() {
+  if (pinMode === 'set') {
+    if (!pinFirst) { pinFirst = pinBuf; pinBuf = ''; $('pinTitle').textContent = 'Nhập lại mã PIN'; drawPin(); return; }
+    if (pinFirst !== pinBuf) { pinFirst = ''; pinBuf = ''; $('pinTitle').textContent = 'Hai lần không khớp. Đặt lại mã PIN'; drawPin(); shake(); return; }
+    LS.set('nho-gia-pin', await hashPin(pinBuf)); closePin(); enterKiosk();
+  } else {
+    if (await hashPin(pinBuf) === LS.get('nho-gia-pin')) { closePin(); exitKiosk(); }
+    else { pinBuf = ''; drawPin(); $('pinHint').textContent = 'Sai mã, thử lại.'; shake(); }
+  }
+}
+$('pinSheet').querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.k;
+  if (k === 'cancel') return closePin();
+  if (k === 'del') { pinBuf = pinBuf.slice(0, -1); drawPin(); return; }
+  if (pinBuf.length >= 4) return;
+  pinBuf += k; drawPin();
+  if (pinBuf.length === 4) setTimeout(pinDone, 120);
+}));
+
+/* enter / leave */
+$('btnKiosk').addEventListener('click', () => {
+  if (!products.length) return toast('Chưa có sản phẩm nào. Hãy thêm sản phẩm trước khi mở cho khách.');
+  if (LS.get('nho-gia-pin')) enterKiosk(); else openPin('set');
+});
+$('kLock').addEventListener('click', () => openPin('exit'));
+function enterKiosk() {
+  LS.set('nho-gia-kiosk', '1');
+  closeSheets(); $('kiosk').hidden = false; document.body.style.overflow = 'hidden';
+  kShow('kIdle'); startCam(); keepAwake();
+}
+function exitKiosk() {
+  LS.set('nho-gia-kiosk', null);
+  clearTimeout(K.timer); stopCam();
+  try { K.wake && K.wake.release(); } catch (e) {} K.wake = null;
+  $('kiosk').hidden = true; document.body.style.overflow = '';
+  toast('Đã thoát chế độ khách');
+}
+async function keepAwake() { try { if (navigator.wakeLock) K.wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function kShow(id) { for (const s of ['kIdle', 'kBusy', 'kRes']) $(s).hidden = s !== id; }
+
+/* front camera */
+async function startCam() {
+  if (K.stream) return;
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera api');
+    K.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+    const v = $('kVideo'); v.srcObject = K.stream; v.hidden = false; $('kNoCam').hidden = true;
+    await v.play().catch(() => {});
+  } catch (e) {
+    console.warn('camera', e); K.stream = null;
+    $('kVideo').hidden = true; $('kNoCam').hidden = false;
+  }
+}
+function stopCam() { if (K.stream) { K.stream.getTracks().forEach(t => t.stop()); K.stream = null; } $('kVideo').srcObject = null; }
+document.addEventListener('visibilitychange', () => {
+  if ($('kiosk').hidden) return;
+  if (document.hidden) stopCam();
+  else { if (!$('kIdle').hidden) startCam(); keepAwake(); }
+});
+
+/* look up */
+function mirrored(c) {
+  const m = document.createElement('canvas'); m.width = c.width; m.height = c.height;
+  const g = m.getContext('2d'); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return m;
+}
+$('kSnap').addEventListener('click', () => {
+  const v = $('kVideo');
+  if (!K.stream || !v.videoWidth) return pick($('camUser'));   // no live camera: fall back to the photo picker (front camera)
+  const frame = square(v, 400);
+  if (blankFrame(frame)) { kShow('kBusy'); return kMessage('Camera chưa sẵn sàng', 'Vui lòng đợi một giây rồi bấm chụp lại.'); }
+  kCheck(frame.toDataURL('image/jpeg', 0.85));
+});
+// a frame grabbed before the camera delivers a picture comes out black or flat
+function blankFrame(c) {
+  const t = document.createElement('canvas'); t.width = t.height = 16;
+  const g = t.getContext('2d'); g.drawImage(c, 0, 0, 16, 16);
+  const d = g.getImageData(0, 0, 16, 16).data; let s = 0, s2 = 0, n = 0;
+  for (let i = 0; i < d.length; i += 4) { const y = (d[i] + d[i + 1] + d[i + 2]) / 3; s += y; s2 += y * y; n++; }
+  const mean = s / n, sd = Math.sqrt(Math.max(0, s2 / n - mean * mean));
+  return mean < 12 || sd < 4;
+}
+$('camUser').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { kCheck(await fileToThumb(f)); } catch (err) { toast('Không đọc được ảnh, hãy chụp lại.'); }
+});
+async function kCheck(img) {
+  if (K.busy) return; K.busy = true;
+  kShow('kBusy');
+  try {
+    if (!feat) { kMessage('Máy đang khởi động', 'Vui lòng đợi vài giây rồi thử lại.'); return; }
+    await new Promise(r => setTimeout(r, 30));
+    const im = await dataUrlImage(img);
+    const base = square(im, 224);
+    const q = [vec(base), vec(square(im, 224, 0.7)), vec(mirrored(base))];   // front camera: also try the mirror image
+    kResult(match(q), img);
+  } catch (e) { console.error(e); kMessage('Chưa kiểm tra được', 'Vui lòng thử lại.'); }
+  finally { K.busy = false; }
+}
+function kResult(r, img) {
+  const top = r[0]; const body = $('kResBody'); body.textContent = '';  if (!top || top.s < MAYBE) return kMessage('Chưa tìm thấy giá', 'Hãy đưa sản phẩm gần hơn, đủ sáng rồi chụp lại, hoặc hỏi nhân viên.');
+  const sure = top.s >= SURE && !(r[1] && top.p.price !== r[1].p.price && top.s - r[1].s < 0.03);
+  const v = document.createElement('span'); v.className = 'verdict ' + (sure ? 'v-good' : 'v-warn'); v.textContent = sure ? 'Giá sản phẩm' : 'Có thể là sản phẩm này';
+  const im = document.createElement('img'); im.src = top.p.photos[0].img; im.alt = '';
+  const price = document.createElement('div'); price.className = 'bigprice'; price.textContent = fmt(top.p.price);
+  const nm = document.createElement('div'); nm.className = 'rname'; nm.textContent = [top.p.brand, top.p.name].filter(Boolean).join(' · ');
+  body.append(v, im, price);
+  if (nm.textContent) body.append(nm);
+  kShowResult();
+}
+function kMessage(title, text) {
+  const body = $('kResBody'); body.textContent = '';
+  const t = document.createElement('div'); t.className = 'kmiss'; t.textContent = title;
+  const p = document.createElement('p'); p.className = 'khint'; p.textContent = text;
+  body.append(t, p); kShowResult();
+}
+function kShowResult() {
+  kShow('kRes');
+  const bar = $('kBarFill'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth;
+  bar.style.transition = 'transform ' + AUTO_BACK_MS + 'ms linear'; bar.style.transform = 'scaleX(0)';
+  clearTimeout(K.timer); K.timer = setTimeout(kBack, AUTO_BACK_MS);
+}
+function kBack() { clearTimeout(K.timer); kShow('kIdle'); startCam(); }
+$('kAgain').addEventListener('click', kBack);
+
 /* ---------- backup ---------- */
 $('btnExport').addEventListener('click', async () => {
   if (!products.length) return toast('Chưa có gì để sao lưu.');
@@ -834,6 +1079,7 @@ $('fileImport').addEventListener('change', async e => {
 (async () => {
   render();
   loadModel();
+  if (LS.get('nho-gia-kiosk') && LS.get('nho-gia-pin')) enterKiosk();   // reopening the app keeps customer mode on
   let ok = false;
   try { ok = await startCloud(); } catch (e) { console.warn('cloud', e); }
   if (!ok) {
