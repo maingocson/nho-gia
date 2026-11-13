@@ -176,6 +176,8 @@ header { align-items: center }
 .pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; animation: pl 1.4s ease-in-out infinite }
 @keyframes pl { 0%, 100% { opacity: .25; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.1) } }
 @media (prefers-reduced-motion: reduce) { .pulse { animation: none } }
+.tFlash { position: absolute; inset: 0; background: #fff; opacity: .7; pointer-events: none }
+#teachSheet .kframe { width: min(100%, 52vh) }
 @media (max-width: 400px) { .ksound span { display: none } .ksound { width: 40px; padding: 0; justify-content: center } }
 .kbody { display: flex; flex-direction: column; gap: 14px; flex: 1 }
 .kcenter { align-items: center; justify-content: center }
@@ -317,6 +319,7 @@ header { align-items: center }
     <div class="bar"><h2>Sửa sản phẩm</h2><button class="x" type="button" data-close aria-label="Đóng">×</button></div>
     <div class="thumbs" id="editThumbs"></div>
     <button class="btn" type="button" id="editAddPhoto">+ Chụp thêm ảnh (góc khác giúp nhận diện tốt hơn)</button>
+    <button class="btn" type="button" id="editTeach">+ Dạy cho chế độ khách (chụp 3 ảnh bằng camera trước)</button>
     <label class="f" for="editPrice">Giá
       <div class="priceBox"><input class="in priceIn" id="editPrice" inputmode="numeric" autocomplete="off"><span>₫</span></div>
     </label>
@@ -334,6 +337,22 @@ header { align-items: center }
       <span>Xóa hẳn sản phẩm này cùng các ảnh của nó? Không hoàn tác được.</span>
       <div class="row"><button class="btn dangerSolid wide" type="button" id="editDelYes">Xóa</button><button class="btn wide" type="button" id="editDelNo">Giữ lại</button></div>
     </div>
+  </div>
+</div>
+
+<!-- TEACH: record a product with the front camera, the way customers will hold it -->
+<div class="sheet" id="teachSheet" hidden>
+  <div class="wrap">
+    <div class="bar"><h2>Dạy cho chế độ khách</h2><button class="x" type="button" id="tClose" aria-label="Đóng">×</button></div>
+    <p class="hint" id="tName"></p>
+    <div class="kframe">
+      <video id="tVideo" playsinline muted autoplay></video>
+      <div class="kNoCam" id="tNoCam" hidden>Không mở được camera trước. Hãy cho phép app dùng camera rồi thử lại.</div>
+      <i class="kguide" aria-hidden="true"></i>
+      <div class="tFlash" id="tFlash" hidden></div>
+    </div>
+    <p class="khint" id="tMsg">Cầm sản phẩm trước camera giống như khách sẽ cầm, đặt vào trong khung nét đứt.</p>
+    <button class="kbtn" id="tStart" type="button">Bắt đầu chụp 3 ảnh</button>
   </div>
 </div>
 
@@ -917,6 +936,9 @@ async function hashPin(p) {
   } catch (e) { return 'p:' + p; }
 }
 const K = { stream: null, timer: null, wake: null, busy: false };
+// the dashed guide box covers the middle 72% of the camera square; recognise only what is inside it,
+// so the customer's face and the room behind do not drown out the product
+const GUIDE = 0.72;
 const AUTO_BACK_MS = 10000;
 
 /* PIN pad */
@@ -998,7 +1020,7 @@ function mirrored(c) {
 $('kSnap').addEventListener('click', () => {
   const v = $('kVideo');
   if (!K.stream || !v.videoWidth) return pick($('camUser'));   // no live camera: fall back to the photo picker (front camera)
-  const frame = square(v, 400);
+  const frame = square(v, 400, GUIDE);
   if (blankFrame(frame)) { kShow('kBusy'); return kMessage('Camera chưa sẵn sàng', 'Vui lòng đợi một giây rồi bấm chụp lại.'); }
   kCheck(frame.toDataURL('image/jpeg', 0.85));
 });
@@ -1023,7 +1045,7 @@ async function kCheck(img) {
     await new Promise(r => setTimeout(r, 30));
     const im = await dataUrlImage(img);
     const base = square(im, 224);
-    const q = [vec(base), vec(square(im, 224, 0.7)), vec(mirrored(base))];   // front camera: also try the mirror image
+    const q = [vec(base), vec(square(im, 224, 0.7)), vec(mirrored(base)), vec(mirrored(square(im, 224, 0.7)))];   // front camera: also try the mirror image
     kResult(match(q), img);
   } catch (e) { console.error(e); kMessage('Chưa kiểm tra được', 'Vui lòng thử lại.'); }
   finally { K.busy = false; }
@@ -1058,6 +1080,48 @@ function kShowResult() {
 function kBack() { clearTimeout(K.timer); kShow('kIdle'); startCam(); }
 $('kAgain').addEventListener('click', kBack);
 
+/* teach: 3 front-camera shots of one product, cropped exactly like customer mode */
+const T = { stream: null, running: false };
+async function tCam() {
+  try {
+    T.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+    const v = $('tVideo'); v.srcObject = T.stream; v.hidden = false; $('tNoCam').hidden = true; await v.play().catch(() => {});
+  } catch (e) { console.warn('teach camera', e); T.stream = null; $('tVideo').hidden = true; $('tNoCam').hidden = false; }
+}
+function tStop() { if (T.stream) T.stream.getTracks().forEach(t => t.stop()); T.stream = null; $('tVideo').srcObject = null; }
+function tLeave() { T.running = false; tStop(); const id = editId; closeSheets(); if (id) openEdit(id); }
+$('editTeach').addEventListener('click', () => {
+  const p = products.find(x => x.id === editId); if (!p) return;
+  $('tName').textContent = [p.name || 'Sản phẩm', p.brand, fmt(p.price)].filter(Boolean).join(' · ');
+  $('tMsg').textContent = 'Cầm sản phẩm trước camera giống như khách sẽ cầm, đặt vào trong khung nét đứt.';
+  $('tStart').disabled = false; open('teachSheet'); tCam();
+});
+$('tClose').addEventListener('click', tLeave);
+$('tStart').addEventListener('click', async () => {
+  const p = products.find(x => x.id === editId); const v = $('tVideo');
+  if (!p || T.running) return;
+  if (!T.stream || !v.videoWidth) return toast('Camera trước chưa mở được.');
+  T.running = true; $('tStart').disabled = true;
+  const shots = []; let tries = 0;
+  const tips = ['Giữ thẳng sản phẩm', 'Nghiêng nhẹ sang trái', 'Nghiêng nhẹ sang phải'];
+  while (shots.length < 3 && tries < 10 && T.running) {
+    tries++;
+    $('tMsg').textContent = `Ảnh ${shots.length + 1}/3: ${tips[shots.length]}…`;
+    await new Promise(r => setTimeout(r, 1100));
+    if (!T.running) break;
+    const fr = square(v, 400, GUIDE);
+    if (blankFrame(fr)) continue;
+    shots.push(fr.toDataURL('image/jpeg', 0.85));
+    $('tFlash').hidden = false; setTimeout(() => $('tFlash').hidden = true, 120);
+  }
+  if (!T.running) return;
+  $('tMsg').textContent = 'Đang lưu…';
+  let n = 0;
+  for (const img of shots) if (await store.addPhoto(p, { img, embs: feat ? await embedThumb(img) : null })) n++;
+  toast(n ? `Đã dạy thêm ${n} ảnh cho chế độ khách` : 'Chưa lưu được ảnh, hãy thử lại.');
+  tLeave();
+});
+
 /* auto scan: look at the live camera a couple of times a second; show a price only for a
    confident match that stays the same on two steady frames in a row */
 const AUTO = { t: null, sig: null, cand: null, n: 0, block: null, every: 500 };
@@ -1074,7 +1138,7 @@ function autoTick() {
   if ($('kiosk').hidden || $('kIdle').hidden || !$('pinSheet').hidden || document.hidden || K.busy || !feat || !K.stream) return;
   const v = $('kVideo'); if (!v.videoWidth) return;
   const t0 = performance.now();
-  const frame = square(v, 224);
+  const frame = square(v, 224, GUIDE);
   if (blankFrame(frame)) { AUTO.block = null; AUTO.sig = null; return; }   // empty, flat view: nothing is held up
   const sig = graySig(frame); const prev = AUTO.sig; AUTO.sig = sig;
   if (!prev || sigDiff(sig, prev) > 9) { AUTO.cand = null; AUTO.n = 0; return; }   // still moving: wait until steady

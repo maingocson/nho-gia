@@ -1,6 +1,6 @@
 // Nhớ Giá service worker: keeps the app usable offline.
 // The page is fetched network-first (so updates arrive), everything else cache-first.
-const CACHE = 'nho-gia-20261113160046';
+const CACHE = 'nho-gia-20261113161550';
 const FILES = ['./', 'index.html', 'tf.min.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
